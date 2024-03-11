@@ -1,4 +1,5 @@
-@file:OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3Api::class,
+@file:OptIn(
+    ExperimentalMaterial3Api::class, ExperimentalMaterial3Api::class,
     ExperimentalMaterial3Api::class
 )
 
@@ -9,6 +10,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.viewModels
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -80,6 +82,9 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
+
+    private val viewModel by viewModels<NewsViewModel>()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
@@ -95,7 +100,7 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    newsApp()
+                    newsApp(viewModel)
                 }
             }
         }
@@ -131,7 +136,7 @@ fun NewsCard(
                     fontWeight = FontWeight.W800,
                     modifier = Modifier
 
-                        .padding(start = 15.dp,end = 15.dp),
+                        .padding(start = 15.dp, end = 15.dp),
 
                     )
                 Text(
@@ -141,7 +146,7 @@ fun NewsCard(
                     fontWeight = FontWeight.W700,
                     modifier = Modifier
                         .padding(top = 10.dp, start = 15.dp, bottom = 13.dp, end = 15.dp),
-                    )
+                )
                 Divider(
                     color = Color.White, // Set the color of the divider
                     modifier = Modifier
@@ -155,7 +160,7 @@ fun NewsCard(
                     fontSize = 12.sp,
                     fontWeight = FontWeight.W800,
                     modifier = Modifier
-                        .padding( start = 15.dp, bottom = 13.dp, end = 15.dp),
+                        .padding(start = 15.dp, bottom = 13.dp, end = 15.dp),
                 )
 
             }
@@ -188,34 +193,30 @@ val items = listOf(
         unselectedIcon = Icons.Outlined.AccountCircle
     ),
     NavigationItem(
-        title = "Puan Durumu",        selectedIcon = Icons.Filled.List,
+        title = "Puan Durumu", selectedIcon = Icons.Filled.List,
         unselectedIcon = Icons.Outlined.List
     )
 )
 
 @Composable
 fun newsList(
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    viewModel: NewsViewModel
 ) {
-    val newsArray = listOf<News>(
-        News(painterResource(R.drawable.news1), "FUTBOL", "Beşiktaş'ta flaş transfer iddiasi!"),
-        News(painterResource(R.drawable.news2basket), "BASKETBOL", "Potanın Kartalları Türkiye Kupası'nda farklı mağlup!"),
-        News(painterResource(R.drawable.news3), "FUTBOL", "Beşiktaş'ın gündemindeki stoper: Denis Vavro"),
-        News(painterResource(R.drawable.news4), "FUTBOL", "Semih Kılıçsoy, Icardi’yi geride bıraktı!")
-    )
-
     LazyColumn(
         modifier = modifier
-    ){
-        items(newsArray){
-            NewsCard(it.image,it.category,it.title)
+    ) {
+        items(viewModel.returnNews()) {
+            NewsCard(painterResource(it.image), it.category, it.title)
         }
     }
 }
 
 
 @Composable
-fun newsApp() {
+fun newsApp(
+    viewModel: NewsViewModel
+) {
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
 
     Surface(
@@ -232,34 +233,37 @@ fun newsApp() {
             drawerContent = {
                 PermanentDrawerSheet {
                     Spacer(modifier = Modifier.height(32.dp))
-                items.forEachIndexed{index, item ->
-                    NavigationDrawerItem(
-                        label = {
-                        Text(text = item.title)
-                    },
-                        selected = index == selectedItemIndex,
-                        onClick = {
-                            selectedItemIndex = index
-                            scope.launch {
-                                drawerState.close()
-                            }
-                        },
-                        icon = {
-                            Icon(imageVector = if(index == selectedItemIndex) {
-                                item.selectedIcon
-                            } else item.unselectedIcon,
-                                contentDescription = item.title)
-                        },
-                        badge = {
-                            item.badgeCount?.let {
-                                Text(text = item.badgeCount.toString())
-                            }
-                        },
-                        modifier = Modifier
-                            .padding(NavigationDrawerItemDefaults.ItemPadding),
-                    )
+                    items.forEachIndexed { index, item ->
+                        NavigationDrawerItem(
+                            label = {
+                                Text(text = item.title)
+                            },
+                            selected = index == selectedItemIndex,
+                            onClick = {
+                                selectedItemIndex = index
+                                scope.launch {
+                                    drawerState.close()
+                                }
+                            },
+                            icon = {
+                                Icon(
+                                    imageVector = if (index == selectedItemIndex) {
+                                        item.selectedIcon
+                                    } else item.unselectedIcon,
+                                    contentDescription = item.title
+                                )
+                            },
+                            badge = {
+                                item.badgeCount?.let {
+                                    Text(text = item.badgeCount.toString())
+                                }
+                            },
+                            modifier = Modifier
+                                .padding(NavigationDrawerItemDefaults.ItemPadding),
+                        )
+                    }
                 }
-            } },
+            },
             drawerState = drawerState
         ) {
             Scaffold(
@@ -269,7 +273,8 @@ fun newsApp() {
                 topBar = {
                     CenterAlignedTopAppBar(
                         title = {
-                            Image(painterResource(R.drawable.kartalrecord),
+                            Image(
+                                painterResource(R.drawable.kartalrecord),
                                 contentDescription = "Icon",
                                 modifier = Modifier.size(90.dp),
                                 alignment = Alignment.CenterEnd
@@ -284,7 +289,7 @@ fun newsApp() {
                                 Icon(
                                     imageVector = Icons.Default.Menu,
                                     contentDescription = "Menu button",
-                                    )
+                                )
                             }
                         },
                         scrollBehavior = scrollBehavior,
@@ -294,15 +299,11 @@ fun newsApp() {
                 }
             ) { values ->
                 newsList(
-                    modifier = Modifier.padding(values)
+                    modifier = Modifier
+                        .padding(values),
+                    viewModel
                 )
             }
         }
     }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun KartalRecord(){
-    newsList()
 }
