@@ -13,6 +13,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.lifecycle.ViewModel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import java.io.BufferedReader
+import java.io.InputStreamReader
+import java.net.HttpURLConnection
+import java.net.URL
 
 class NewsViewModel : ViewModel() {
 
@@ -35,6 +41,27 @@ class NewsViewModel : ViewModel() {
                 "Semih Kılıçsoy, Icardi’yi geride bıraktı!"
             )
         )
+    }
+
+    suspend fun fetchXMLData(urlString: String): String = withContext(Dispatchers.IO) {
+        val url = URL(urlString)
+        val connection = url.openConnection() as HttpURLConnection
+        connection.requestMethod = "GET"
+        connection.connect()
+
+        val reader = BufferedReader(InputStreamReader(connection.inputStream))
+        val stringBuilder = StringBuilder()
+
+        var line: String? = reader.readLine()
+        while (line != null) {
+            stringBuilder.append(line)
+            line = reader.readLine()
+        }
+
+        reader.close()
+        connection.disconnect()
+
+        stringBuilder.toString()
     }
 
 }
